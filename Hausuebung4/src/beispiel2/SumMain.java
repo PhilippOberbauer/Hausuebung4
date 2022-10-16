@@ -1,11 +1,9 @@
 package beispiel2;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.*;
 
 public class SumMain {
     public static void main(String[] args) {
@@ -19,29 +17,37 @@ public class SumMain {
         int limit = scanner.nextInt();
         executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(limit);
 
-        for (int i = 0; i < limit; i++) //todo: evt. auf stream umschreiben
+        for (int i = 0; i < limit; i++)
         {
             numbers.add(i+1);
         }
 
-        for (int i = 0; i < limit/100; i++)
+        List<SumCallable> callableList = new ArrayList<>();
+
+        for (int i = 0; i <= limit/100; i++)
         {
             ArrayList<Integer> chunk = new ArrayList<>();
 
-            for (int j = 100*i; j < (100*i)+100; j++)
+            for (int j = 100*i; j < (100*i)+100 && j < limit; j++)
             {
                 chunk.add(numbers.get(j));
             }
 
             SumCallable sumCallable = new SumCallable(chunk);
-            Future<Integer> result = executor.submit(sumCallable);
-            try {
-                sum += result.get();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            } catch (ExecutionException e) {
-                throw new RuntimeException(e);
+            callableList.add(sumCallable);
+        }
+
+        try {
+            List<Future<Integer>> results = executor.invokeAll(callableList);
+
+            for (int i = 0; i < results.size(); i++)
+            {
+                sum += results.get(i).get();
             }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        } catch (ExecutionException e) {
+            throw new RuntimeException(e);
         }
 
         executor.shutdown();
