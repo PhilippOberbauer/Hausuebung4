@@ -56,7 +56,7 @@ public class SumMain {
 
         if (sum == gaußResult)
         {
-            System.out.println(sum);
+            System.out.println("Sum: " + sum);
         }
     }
 }
